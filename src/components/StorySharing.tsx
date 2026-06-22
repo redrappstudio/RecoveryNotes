@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Users2, Trash2, BookOpen, Plus, Send, X, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { devSubstories } from './SubstoriesData';
 
 const SUPABASE_URL = "https://uyauptkvemjcecjvfnls.supabase.co";
@@ -222,7 +222,7 @@ export default function StorySharing() {
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>실제 극복 수기 기록</span>
                   </div>
-                  <h4 className="text-base sm:text-lg font-black text-slate-950 tracking-tight">
+                  <h4 className="text-base sm:text-lg font-black text-slate-955 tracking-tight">
                     {currentDevStory.title}: <span className="text-slate-800 font-bold">{currentDevStory.subtitle}</span>
                   </h4>
                 </div>
@@ -291,7 +291,7 @@ export default function StorySharing() {
                     <Users2 className="w-4 h-4 text-slate-950" />
                   </div>
                   <div>
-                    <h4 className="font-black text-slate-950 text-sm">동행을 위한 응원의 글과 결의</h4>
+                    <h4 className="font-black text-slate-955 text-sm">동행을 위한 응원의 글과 결의</h4>
                     <p className="text-slate-900 text-[10px] font-bold">함께 극복하고 이겨내기 위한 따뜻한 다짐 보드입니다.</p>
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export default function StorySharing() {
                   </div>
                 ) : stories.length === 0 ? (
                   <div className="bg-white/45 border border-dashed border-slate-300 rounded-2xl py-10 px-5 text-center text-slate-800 space-y-1.5" id="feed-empty-box">
-                    <p className="text-xs font-black text-slate-950">아직 등록된 다짐이 없습니다.</p>
+                    <p className="text-xs font-black text-slate-955">아직 등록된 다짐이 없습니다.</p>
                     <p className="text-[10px] font-bold text-slate-900">첫 번째로 동참하여 따뜻한 한 마디를 건네어보세요!</p>
                   </div>
                 ) : (
