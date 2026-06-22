@@ -17,7 +17,9 @@ import {
   BarChart2,
   CalendarCheck2,
   Mail,
-  MessageCircle
+  MessageCircle,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 
 import { GamblerStatus, SalaryManagement, NoGamblingCalendar, DebtTracker, BehaviorChecklistState } from './types';
@@ -31,6 +33,10 @@ export default function App() {
   
   // Tab within Page 0 (치유 실천관) to split Diagnosis vs Action tools to save screen density
   const [p0ActiveTab, setP0ActiveTab] = useState<'diagnosis' | 'action'>('diagnosis');
+
+  const [showDisclaimer, setShowDisclaimer] = useState<boolean>(() => {
+    return localStorage.getItem('dandan_disclaimer_agreed') !== 'true';
+  });
 
   const navigationGuardRef = useRef<(() => boolean) | null>(null);
 
@@ -422,6 +428,70 @@ export default function App() {
           </a>
         </div>
       </footer>
+
+      {/* 📌 앱 최초 시작 안내사항 팝업 (디스클레이머) */}
+      <AnimatePresence>
+        {showDisclaimer && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" id="disclaimer-modal-overlay">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="bg-[#faf6f0] border-2 border-[#d8975e] p-5 sm:p-6 max-w-lg w-full rounded-2xl shadow-2xl relative text-black flex flex-col gap-4 overflow-hidden animate-none"
+              id="disclaimer-modal-card"
+            >
+              {/* 우상단 x 버튼 */}
+              <button
+                type="button"
+                onClick={() => setShowDisclaimer(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-[#d8975e]/10 text-slate-700 hover:text-black transition-colors cursor-pointer"
+                id="btn-close-disclaimer-top"
+                aria-label="닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* 아이콘 + 타이틀 */}
+              <div className="flex items-center gap-2 pt-1 pb-1.5 border-b border-[#d8975e]/25">
+                <AlertTriangle className="w-5 h-5 text-[#e06d33]" />
+                <h2 className="text-lg font-black text-slate-950 tracking-tight" id="disclaimer-title">안내사항</h2>
+              </div>
+
+              {/* 본문 설명 */}
+              <div className="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed space-y-3.5 my-1" id="disclaimer-body">
+                <p className="p-2.5 bg-yellow-50 border-l-4 border-amber-600 rounded-r-lg text-amber-950 text-xs font-bold leading-relaxed">
+                  본 앱은 전문적인 치료 또는 상담 서비스를 제공하는 프로그램이 아닙니다.
+                </p>
+                <p>
+                  이 앱은 개발자가 직접 겪은 도박 중독 경험과 회복 과정을 바탕으로 제작되었으며, 도박 중독의 위험성과 그로 인해 발생하는 피해를 알리기 위한 목적으로 운영됩니다.
+                </p>
+                <p>
+                  도박 중독으로 어려움을 겪고 있는 분들과 가족들이 관련 정보를 접하고, 도움을 받을 수 있는 기관을 찾는 데 작은 도움이 되기를 바랍니다.
+                </p>
+                <p className="text-slate-950 font-black text-xs">
+                  현재 중독 문제로 어려움을 겪고 계신 경우에는 반드시 전문 상담기관 또는 의료기관의 도움을 받으시기 바랍니다.
+                </p>
+              </div>
+
+              {/* 동의 버튼 */}
+              <div className="pt-2 border-t border-[#d8975e]/20 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('dandan_disclaimer_agreed', 'true');
+                    setShowDisclaimer(false);
+                  }}
+                  className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm rounded-xl transition duration-150 shadow-sm cursor-pointer hover:shadow active:scale-98"
+                  id="btn-agree-and-start"
+                >
+                  동의하고 시작하기
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

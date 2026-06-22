@@ -20,6 +20,14 @@ export default function StorySharing() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [stories, setStories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [myPostIds, setMyPostIds] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem('dandan_my_posts');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // 폼 입력 상태 - 수파베이스 실제 컬럼명과 완벽한 맵핑
   const [relation, setRelation] = useState('');
@@ -75,18 +83,29 @@ export default function StorySharing() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('posts')
         .insert([{ 
           relation: relation.trim(),
           age: age.trim(),
           title: title.trim(),
           content: content.trim()
-        }]);
+        }])
+        .select();
 
       if (error) {
         alert('작성 실패: ' + error.message);
       } else {
+        if (data && data.length > 0) {
+          const newId = data[0].id;
+          try {
+            const updated = [...myPostIds, newId];
+            setMyPostIds(updated);
+            localStorage.setItem('dandan_my_posts', JSON.stringify(updated));
+          } catch (storageError) {
+            console.error('LocalStorage write error:', storageError);
+          }
+        }
         setRelation('');
         setAge('');
         setTitle('');
@@ -103,6 +122,10 @@ export default function StorySharing() {
 
   // 글 삭제하기 (취소/삭제 패스워드 없는 간결한 confirm방식 복구)
   const handleDeleteStory = async (id: number) => {
+    if (!myPostIds.includes(id)) {
+      alert('본인이 작성한 글만 삭제할 수 있습니다.');
+      return;
+    }
     if (window.confirm('소중하게 남겨주신 이 치유기 사연 글을 정말로 삭제하시겠습니까?')) {
       try {
         const { error } = await supabase
@@ -113,6 +136,13 @@ export default function StorySharing() {
         if (error) {
           alert('삭제 실패: ' + error.message);
         } else {
+          try {
+            const updated = myPostIds.filter(pid => pid !== id);
+            setMyPostIds(updated);
+            localStorage.setItem('dandan_my_posts', JSON.stringify(updated));
+          } catch (storageError) {
+            console.error('LocalStorage update error:', storageError);
+          }
           fetchStories();
         }
       } catch (err: any) {
@@ -149,7 +179,7 @@ export default function StorySharing() {
           }`}
           id="btn-subtab-memoir"
         >
-          <span>10년의 치유 수기</span>
+          <span>개발자의 치유과정</span>
         </button>
         <button
           type="button"
@@ -295,7 +325,7 @@ export default function StorySharing() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-950 text-xs sm:text-sm">우리들의 치유 소통 게시판</h3>
-                    <p className="text-slate-800 text-[10px] font-bold">중독자와의 관계와 당시 힘겨웠던 나이를 텍스트로 자유롭게 나누는 익명 게시판입니다.</p>
+                    <p className="text-slate-800 text-[10px] font-bold">중독자 가족으로써의 기억, 경험, 감정을 공유하고 응원해 주세요.</p>
                   </div>
                 </div>
 
@@ -463,16 +493,18 @@ export default function StorySharing() {
                         </div>
 
                         {/* 삭제 액션 */}
-                        <div className="flex items-start pt-0.5" id={`story-action-${item.id}`}>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteStory(item.id)}
-                            className="p-1 px-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100 cursor-pointer"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        {myPostIds.includes(item.id) && (
+                          <div className="flex items-start pt-0.5" id={`story-action-${item.id}`}>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteStory(item.id)}
+                              className="p-1 px-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-transparent hover:border-rose-100 cursor-pointer"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
