@@ -1,0 +1,6 @@
+{
+  "name": "리커버리 노트 - 도박 중독 극복 가족 가이드",
+  "description": "도박 중독 가족들을 위한 자가 진단, 개발자가 제안하는 가족 중심 극복 솔루션(급여 및 생활비 관리, 캘린더 D-Day, 채무 트래커, 일기), 실제 중독 및 극복 성공 사례와 공인 치유 기관 안내를 제공하는 공익 안내 플랫폼입니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
