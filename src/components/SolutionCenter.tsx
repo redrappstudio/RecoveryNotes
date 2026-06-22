@@ -62,6 +62,8 @@ export default function SolutionCenter({
   // Sub-tabs in Solution Center
   const [activeSubTab, setActiveSubTab] = useState<'salary' | 'calendar' | 'debt' | 'checklist'>('salary');
 
+  const [showSalaryHistoryModal, setShowSalaryHistoryModal] = useState(false);
+
   // Custom Modal implementation for premium, beautifully styled inside-app dialogs
   const [modal, setModal] = useState<{
     isOpen: boolean;
@@ -165,17 +167,50 @@ export default function SolutionCenter({
 
   const handleSalaryDayClick = (dateStr: string) => {
     const currentChecked = salaryMgmt.checkedDates || [];
-    let updated: string[];
     const isPaid = currentChecked.includes(dateStr);
     if (isPaid) {
-      updated = currentChecked.filter(d => d !== dateStr);
-    } else {
-      updated = [...currentChecked, dateStr];
+      // 꺼지는 기능 없애기 위해 이미 지급된 경우 아무것도 안 함
+      return;
     }
+    const updated = [...currentChecked, dateStr];
     
     onUpdateSalaryMgmt({
       ...salaryMgmt,
       checkedDates: updated
+    });
+
+    showCustomModal({
+      title: '생활비 지급 완료 처리',
+      message: `${dateStr}의 최저생활비 지급 완료 처리가 안전하게 기록되었습니다.`,
+      type: 'success',
+      confirmText: '확인'
+    });
+  };
+
+  const handleDeleteSalaryDate = (dateStr: string) => {
+    showCustomModal({
+      title: '기록 삭제 확인',
+      message: `${dateStr}의 지급 완료 이력을 정말 삭제하시겠습니까?`,
+      type: 'warning',
+      showCancel: true,
+      confirmText: '삭제하기',
+      cancelText: '취소',
+      onConfirm: () => {
+        const currentChecked = salaryMgmt.checkedDates || [];
+        const updated = currentChecked.filter(d => d !== dateStr);
+        onUpdateSalaryMgmt({
+          ...salaryMgmt,
+          checkedDates: updated
+        });
+        setTimeout(() => {
+          showCustomModal({
+            title: '삭제 완료',
+            message: `${dateStr}의 지급 이력이 성공적으로 삭제되었습니다.`,
+            type: 'success',
+            confirmText: '확인'
+          });
+        }, 100);
+      }
     });
   };
 
@@ -840,18 +875,8 @@ export default function SolutionCenter({
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-black text-slate-900 mb-1">송금 리마인드 알림 시각</label>
-                      <input
-                        type="time"
-                        value={payoutTime}
-                        onChange={(e) => setPayoutTime(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-black font-semibold shadow-sm"
-                      />
-                    </div>
-
                     {period === 'weekly' && (
-                      <div>
+                      <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-black text-slate-900 mb-1">매주 지급 요일</label>
                         <select
                           value={payoutDay}
@@ -868,19 +893,6 @@ export default function SolutionCenter({
                         </select>
                       </div>
                     )}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t border-amber-600/10">
-                    <input
-                      type="checkbox"
-                      id="allowNotif"
-                      checked={allowNotif}
-                      onChange={(e) => setAllowNotif(e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
-                    />
-                    <label htmlFor="allowNotif" className="text-xs font-bold text-slate-900 cursor-pointer select-none">
-                      송금 시각 리마인드 알림 수신 동의
-                    </label>
                   </div>
                 </div>
               )}
@@ -937,7 +949,15 @@ export default function SolutionCenter({
                     <h4 className="text-xs font-black text-black">
                       {currentYearMonth.year}년 {(currentYearMonth.month + 1)}월 생활비 이체 및 지급 이력판
                     </h4>
-                    <div className="flex gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowSalaryHistoryModal(true)}
+                        className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-[10px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer"
+                        title="지급 내역 상세보기"
+                      >
+                        📋 상세보기
+                      </button>
                       <button 
                         type="button"
                         onClick={prevMonth} 
@@ -1001,9 +1021,6 @@ export default function SolutionCenter({
                       );
                     })}
                   </div>
-                  <p className="text-[10px] text-slate-900 font-bold mt-3 text-right">
-                    📅 생활비를 이체하여 보낸 날을 탭하면 지급 성공 기호와 함께 이력이 영구 기록됩니다.
-                  </p>
                 </div>
               </div>
             )}
@@ -2921,6 +2938,86 @@ export default function SolutionCenter({
 
       {/* Premium custom modal dialog popup fallback to window.confirm/alert inside sandboxed iframes */}
       <AnimatePresence>
+        {showSalaryHistoryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSalaryHistoryModal(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 max-w-sm w-full mx-auto overflow-hidden text-slate-900 flex flex-col max-h-[80vh]"
+            >
+              <div className="flex items-center justify-between border-b pb-3 mb-4">
+                <h3 className="text-sm font-black text-slate-950">
+                  📊 {currentYearMonth.year}년 {currentYearMonth.month + 1}월 지급 상세 내역
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowSalaryHistoryModal(false)}
+                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-black transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* List of dates */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                {(() => {
+                  const currentMonthPrefix = `${currentYearMonth.year}-${String(currentYearMonth.month + 1).padStart(2, '0')}`;
+                  const monthlyDates = (salaryMgmt.checkedDates || [])
+                    .filter(d => d.startsWith(currentMonthPrefix))
+                    .sort((a, b) => b.localeCompare(a));
+
+                  if (monthlyDates.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-xs font-semibold text-slate-500">
+                        이번 달 지급 이력이 없습니다.
+                      </div>
+                    );
+                  }
+
+                  return monthlyDates.map(dateStr => (
+                    <div key={dateStr} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                      <span className="text-xs font-black text-slate-900">{dateStr}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
+                          지급 완료
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSalaryDate(dateStr)}
+                          className="p-1 text-slate-400 hover:text-rose-650 hover:bg-rose-50 rounded-lg transition border border-transparent hover:border-rose-100 cursor-pointer"
+                          title="기록 삭제"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              <div className="pt-4 mt-2 border-t flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowSalaryHistoryModal(false)}
+                  className="w-full py-2 bg-slate-905 hover:bg-slate-800 text-white font-black text-xs rounded-xl transition"
+                >
+                  닫기
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {modal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
